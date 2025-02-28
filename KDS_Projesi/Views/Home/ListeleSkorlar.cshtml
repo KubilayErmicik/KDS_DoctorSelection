@@ -1,0 +1,43 @@
+﻿@model List<KDS_Projesi.Controllers.DoktorSkorViewModel>
+
+<h3 style="text-align: center; margin-bottom: 20px; font-size: 24px; color: #007bff;">Doktor Listesi ve Skorlar</h3>
+
+@if (Model != null && Model.Any())
+{
+    <table style="width: 100%; border-collapse: collapse; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+        <thead>
+            <tr style="background-color: #007bff; color: white; text-align: left;">
+                <th style="border: 1px solid #ddd; padding: 10px;">Doktor Adı</th>
+                <th style="border: 1px solid #ddd; padding: 10px;">Poliklinik</th>
+                <th style="border: 1px solid #ddd; padding: 10px;">Gün</th>
+                <th style="border: 1px solid #ddd; padding: 10px;">Saat</th>
+                <th style="border: 1px solid #ddd; padding: 10px; text-align: center;">Hesaplanan Skor</th>
+                <th style="border: 1px solid #ddd; padding: 10px; text-align: center;">Randevu Al</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var doktor in Model)
+            {
+                <tr style="background-color: #f9f9f9; transition: background-color 0.3s;">
+                    <td style="border: 1px solid #ddd; padding: 10px;">@doktor.Ad</td>
+                    <td style="border: 1px solid #ddd; padding: 10px;">@doktor.Poliklinik</td>
+                    <td style="border: 1px solid #ddd; padding: 10px;">@doktor.Gun</td>
+                    <td style="border: 1px solid #ddd; padding: 10px;">@doktor.Saat</td>
+                    <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">@doktor.Skor.ToString("F2")</td>
+                    <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">
+                        <form action="@Url.Action("RandevuOlustur", "Home")" method="post">
+                            <input type="hidden" name="doktorID" value="@doktor.DoktorID" />
+                            <button style="padding: 8px 16px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease;">
+                                Randevu Al
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p style="text-align: center; color: #555; font-size: 18px; margin-top: 20px;">Uygun doktor bulunamadı.</p>
+}

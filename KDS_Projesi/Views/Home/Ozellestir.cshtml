@@ -1,0 +1,83 @@
+﻿
+@{
+    Layout = null;
+}
+
+<h3 style="text-align: center; font-size: 24px; color: #007bff; margin-bottom: 10px;">Kriterlerinizi Belirleyin</h3>
+<p style="text-align: center; color: #555; font-size: 16px; margin-bottom: 20px;">
+    Lütfen aşağıdaki kriterleri kaydırarak seçiminizi yapın.
+</p>
+
+<!-- Form -->
+<form action="@Url.Action("KriterDegerlendir", "Home")" method="post" style="max-width: 600px; margin: 0 auto; padding: 25px; border: 1px solid #ddd; border-radius: 10px; background: linear-gradient(120deg, #f9f9f9, #ffffff); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+    <!-- Deneyim Kriteri -->
+    <div style="margin-bottom: 20px;">
+        <label for="deneyim" style="font-weight: bold; display: block; margin-bottom: 5px;">🧑‍⚕️ Doktorun deneyim yılı en az kaç olmalıdır?</label>
+        <input type="range" id="deneyim" name="deneyim" min="1" max="50" value="25" oninput="document.getElementById('deneyim-value').innerText = this.value;" style="width: 100%;">
+        <span id="deneyim-value" style="display: block; text-align: center; margin-top: 5px;">25</span>
+    </div>
+
+    <!-- Memnuniyet Kriteri -->
+    <div style="margin-bottom: 20px;">
+        <label for="memnuniyet" style="font-weight: bold; display: block; margin-bottom: 5px;">😊 Hastaların doktordan memnuniyeti ne kadar önemli?</label>
+        <input type="range" id="memnuniyet" name="memnuniyet" min="0" max="100" value="50" oninput="document.getElementById('memnuniyet-value').innerText = this.value + '%';" style="width: 100%;">
+        <span id="memnuniyet-value" style="display: block; text-align: center; margin-top: 5px;">50%</span>
+    </div>
+
+    <!-- İletişim Becerisi Kriteri -->
+    <div style="margin-bottom: 20px;">
+        <label for="iletisim" style="font-weight: bold; display: block; margin-bottom: 5px;">💬 Doktorun iletişim becerileri sizin için ne kadar önemli?</label>
+        <input type="range" id="iletisim" name="iletisim" min="0" max="100" value="50" oninput="document.getElementById('iletisim-value').innerText = this.value + '%';" style="width: 100%;">
+        <span id="iletisim-value" style="display: block; text-align: center; margin-top: 5px;">50%</span>
+    </div>
+
+    <!-- Tedavi Maliyeti Kriteri -->
+    <div style="margin-bottom: 20px;">
+        <label for="tedavi" style="font-weight: bold; display: block; margin-bottom: 5px;">💰 Tedaviniz için ayırabileceğiniz muayene ve tedavi ücreti ne kadardır?</label>
+        <input type="range" id="tedavi" name="tedavi" min="0" max="50000" value="25000" oninput="document.getElementById('tedavi-value').innerText = parseInt(this.value).toLocaleString('tr-TR') + ' TL';" style="width: 100%;">
+        <span id="tedavi-value" style="display: block; text-align: center; margin-top: 5px;">25.000 TL</span>
+    </div>
+
+    <!-- Dinamik Geri Bildirim -->
+    <div id="summary" style="margin-top: 20px; padding: 10px; border: 1px solid #ddd; background-color: #f9f9f9;">
+        <h4>Seçimleriniz</h4>
+        <p>Deneyim: <span id="summary-deneyim">25</span> </p>
+        <p>Memnuniyet: <span id="summary-memnuniyet">50</span></p>
+        <p>İletişim: <span id="summary-iletisim">50</span></p>
+        <p>Tedavi Maliyeti: <span id="summary-tedavi">25.000 TL</span></p>
+    </div>
+
+    <!-- Form Gönder Butonu -->
+    <div style="text-align: center; margin-top: 20px;">
+        <button type="submit" style="padding: 12px 25px; background-color: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; transition: background-color 0.3s ease;">
+            Kriterleri Gönder
+        </button>
+    </div>
+</form>
+
+<!-- Dinamik Geri Bildirim Scripti -->
+<script>
+    const updateSummary = () => {
+        document.getElementById("summary-deneyim").innerText = document.getElementById("deneyim").value + " yıl";
+        document.getElementById("summary-memnuniyet").innerText = document.getElementById("memnuniyet").value + "%";
+        document.getElementById("summary-iletisim").innerText = document.getElementById("iletisim").value + "%";
+        document.getElementById("summary-tedavi").innerText = parseInt(document.getElementById("tedavi").value).toLocaleString('tr-TR') + " TL";
+    };
+
+    document.querySelectorAll("input[type=range]").forEach(input => {
+        input.addEventListener("input", updateSummary);
+    });
+</script>
+
+<!-- Stil -->
+<style>
+    button:hover {
+        background-color: #0056b3;
+    }
+
+    input:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    }
+</style>

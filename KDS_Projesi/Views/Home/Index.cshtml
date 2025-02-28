@@ -1,0 +1,621 @@
+﻿@{
+    Layout = null;
+    ViewBag.Title = "Ana Sayfa";
+    var userName = Session["UserName"]?.ToString() ?? "Misafir";
+    var surName = Session["SurName"]?.ToString() ?? "";
+    var randevular = ViewBag.Randevular as List<KDS_Projesi.Randevular>;
+    var doktorlar = ViewBag.Doktorlar as List<KDS_Projesi.Doktorlar>;
+}
+
+<!-- Tarih ve Saat -->
+<div id="current-time" style="position: fixed; top: 10px; right: 20px; color: white; padding: 20px; font-weight: bold; font-family: Arial, sans-serif;">
+    <span id="date"></span> <span id="time"></span>
+</div>
+
+<script>
+    function updateDateTime() {
+        const now = new Date();
+        const date = now.toLocaleDateString("tr-TR", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        const time = now.toLocaleTimeString("tr-TR", { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        document.getElementById("date").textContent = date;
+        document.getElementById("time").textContent = time;
+    }
+
+    // Tarih ve saati başlat
+    updateDateTime();
+
+    // Tarih ve saati her saniye güncelle
+    setInterval(updateDateTime, 1000);
+</script>
+
+<!-- Kullanıcı Adı -->
+<div style="padding: 20px; background-color: #4A90E2; color: white; text-align: center; border-bottom: 2px solid #357ABD;">
+    <h3 style="margin: 0; font-size: 24px;">Hoş Geldiniz, <strong>@userName @surName</strong></h3>
+</div>
+
+<!-- Randevu Listesi -->
+<div style="padding: 20px; max-width: 800px; margin: 30px auto; background-color: #F5F7FA; border-radius: 10px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
+    <h4 style="text-align: center; margin-bottom: 20px; color: #333; font-size: 20px;">Randevularınız:</h4>
+
+    @if (randevular != null && randevular.Any())
+    {
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <thead>
+                <tr style="background-color: #4A90E2; color: white; text-align: left;">
+                    <th style="padding: 12px; border: 1px solid #ddd;">Doktor Adı - Soyadı</th>
+                    <th style="padding: 12px; border: 1px solid #ddd;">Poliklinik</th>
+                    <th style="padding: 12px; border: 1px solid #ddd;">Tarih - Saat</th>
+                    <th style="padding: 12px; border: 1px solid #ddd;">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var randevu in randevular)
+                {
+                    // Doktor bilgilerini getir
+                    var doktor = doktorlar.FirstOrDefault(d => d.DoktorID == randevu.DoktorID);
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd;">@(doktor?.Ad ?? "Bilinmiyor") @(doktor?.Soyad ?? "Bilinmiyor")</td>
+                        <td style="padding: 12 px; border: 1px solid #ddd;">@randevu.Poliklinik</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">@randevu.Gun.ToString("dd/MM/yyyy") @randevu.Saat.ToString(@"hh\:mm")</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
+                            <button class="btn btn-danger btn-custom" onclick="iptalEt(@randevu.RandevuID)">İptal Et</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p style="text-align: center; color: #555;">Henüz bir randevunuz bulunmamaktadır.</p>
+    }
+</div>
+
+<style>
+   
+    .btn-custom {
+        background-color: #D0021B;
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        font-size: 16px;
+        border-radius: 5px;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+        .btn-custom:hover {
+            background-color: #C81D1B;
+            transform: scale(1.05);
+        }
+
+        .btn-custom:active {
+            background-color: #A50000;
+            transform: scale(1);
+        }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        padding: 12px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+
+    th {
+        background-color: #4A90E2;
+        color: white;
+    }
+</style>
+
+
+<script>
+    // Randevu iptal etme fonksiyonu
+    function iptalEt(randevuId) {
+        if (confirm("Randevunuzu iptal etmek istediğinize emin misiniz?")) {
+            // İptal etme isteğini sunucuya gönder
+            fetch('/Home/IptalEt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ randevuId: randevuId })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("Randevunuz başarıyla iptal edilmiştir.");
+                        location.reload(); // Sayfayı yenileyerek randevu listesini güncelle
+                    } else {
+                        alert("Randevu iptali sırasında bir hata oluştu.");
+                    }
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                    alert("Bir hata oluştu.");
+                });
+        }
+    }
+</script>
+
+<!-- Randevu Al Butonu -->
+<div style="max-width: 800px; margin: 30px auto; text-align: center;">
+    <button id="randevu-al" style="padding: 10px; background-color: #4A90E2; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background-color 0.3s;">
+        Randevu Al
+    </button>
+</div>
+
+<!-- Poliklinik, Gün ve Saat Seçimi -->
+<div id="randevu-al-form" style="display: none; position: fixed; bottom: 140px; right: 20px; width: 300px; background-color: #F5F7FA; padding: 20px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);">
+    <h4 style="color: #333;">Randevu Al</h4>
+
+    <label for="poliklinik">Poliklinik:</label>
+    <select id="poliklinik" style="width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd;">
+        <option value="dahiliye">Dahiliye</option>
+        <option value="kardiyoloji">Kardiyoloji</option>
+        <option value="ortopedi">Ortopedi</option>
+        <option value="kbb">KBB</option>
+        <option value="cildiye">Cildiye</option>
+        <option value="gastro">Gastroentereloji</option>
+    </select>
+
+    <label for="gün">Gün:</label>
+    <input type="date" id="gün" style="width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd;" onchange="disablePastDates()">
+
+    <label for="saat">Saat:</label>
+    <input type="time" id="saat" style="width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd;" min="08:00" max="17:00" onchange="validateTime()">
+
+    <button id="randevu-al-submit" style="padding: 10px; background-color: #4A90E2; color: white; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; transition: background-color 0.3s;">
+        Randevu Al
+    </button>
+</div>
+
+<script>
+    function disablePastDates() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('gün').setAttribute('min', today);
+    }
+    window.onload = disablePastDates;
+
+    function validateTime() {
+        const timeInput = document.getElementById('saat');
+        const selectedTime = timeInput.value;
+
+        if (selectedTime < "08:00" || selectedTime > "16:00") {
+            alert("Lütfen 08:00 - 16:00 arasında bir saat seçiniz.");
+            timeInput.value = "";  
+        }
+    }
+    function showRedirectModal() {
+        const modal = document.getElementById("redirect-modal");
+        const timerElement = document.getElementById("countdown-timer");
+        let countdown = 5;
+
+        modal.style.display = "flex";
+        timerElement.textContent = countdown;
+
+        const interval = setInterval(() => {
+            countdown--;
+            timerElement.textContent = countdown;
+
+            if (countdown <= 0) {
+                clearInterval(interval); 
+                window.location.href = '/Home/Listele'; 
+            }
+        }, 1000); // Her 1 saniyede bir güncelle
+    }
+    function showErrorModal(message) {
+        const modal = document.getElementById("error-modal");
+        const errorMessage = document.getElementById("error-message");
+        errorMessage.textContent = message; // Gelen mesajı ayarla
+        modal.style.display = "flex"; // Modal'ı görünür yap
+    }
+
+    function closeErrorModal() {
+        const modal = document.getElementById("error-modal");
+        modal.style.display = "none"; // Modal'ı gizle
+    }
+
+
+
+  
+
+</script>
+<script>
+    document.getElementById("randevu-al").addEventListener("click", () => {
+        // Formu göster/gizle toggle işlemi
+        const form = document.getElementById("randevu-al-form");
+        if (form.style.display === "block") {
+            form.style.display = "none"; // Gizle
+        } else {
+            form.style.display = "block"; // Göster
+        }
+    });
+
+    document.getElementById("randevu-al-submit").addEventListener("click", () => {
+        // Kullanıcının girdiği verileri al
+        const poliklinik = document.getElementById("poliklinik").value;
+        const gun = document.getElementById("gün").value;
+        const saat = document.getElementById("saat").value;
+
+        // Form verilerini kontrol et
+        if (!poliklinik || !gun ) {
+            alert("Lütfen tüm alanları doldurun!");
+            return;
+        }
+
+        // Verileri sunucuya gönder
+        const randevuData = {
+            poliklinik,
+            gun,
+            saat: saat || null // Saat seçilmediyse null gönder
+        };
+        fetch('/Home/Sorgula', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(randevuData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showRedirectModal();
+                } else {
+                    showErrorModal("Randevu alırken bir hata oluştu. Lütfen bilgilerinizi kontrol edip tekrar deneyin.");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showErrorModal("Sunucu ile bağlantı sırasında bir hata oluştu. Lütfen internet bağlantınızı kontrol edin.");
+            });
+    });
+</script>
+
+<!-- Chatbot Bilgilendirme Yazısı -->
+<div style="position: fixed; bottom: 135px; right: 27%; width: 50%; font-size: 14px; color: black;">
+    <p><strong></strong></p>
+    <p>Bu chatbot arayüzü sayesinde randevu alabilir, mevcut randevunuzu iptal edebilir ve hangi polikliniğe gitmeniz gerektiği hakkında bilgi alabilirsiniz. Eğer hangi polikliniği tercih edemediğiniz konusunda bir sorunuz varsa, chatbot size yardımcı olabilir. Ayrıca, poliklinikler hakkında detaylı bilgi almak ve tercihlerinize uygun seçenekleri keşfetmek için chatbot ile sohbet edebilirsiniz.</p>
+</div>
+
+<!-- Chatbot -->
+
+<div style="position: fixed; bottom: 105px; right: 27%; width: 50%;">
+
+    <button id="chatbot-toggle" style="padding: 10px; background-color: #4A90E2; color: white; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; transition: background-color 0.3s;">
+        Nasıl Yardımcı Olabiliriz?
+    </button>
+    <div id="chatbot" style="display: none; background-color: #f8f9fa; border: 1px solid #ddd; padding: 10px; border-radius: 5px; margin-top: 10px;">
+        <div id="chatbot-output" style="max-height: 200px; overflow-y: auto; margin-bottom: 10px;">
+            <p>Merhaba! Randevu almak için poliklinik, gün ve saat bilgilerini sırayla girin.</p>
+        </div>
+        <input id="chatbot-date" type="date" style="display: none; width: calc(100% - 20px); padding: 5px; margin-bottom: 5px;" />
+        <input id="chatbot-input" type="text" placeholder="Cevabınızı yazın..." style="width: calc(100% - 20px); padding: 5px; margin-bottom: 5px;" />
+        <button id="chatbot-send" style="width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            Gönder
+        </button>
+    </div>
+
+    <div id="redirect-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 9999; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; max-width: 400px; width: 90%;">
+            <h3>Randevunuz Alındı!</h3>
+            <p>İşlem başarı ile tamamlandı. Şimdi yönlendiriliyorsunuz...</p>
+            <p id="countdown-timer" style="font-weight: bold; font-size: 1.2em; margin-top: 10px;">5</p>
+        </div>
+    </div>
+    <div id="error-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 9999; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; max-width: 400px; width: 90%;">
+            <h3>Bir Hata Oluştu</h3>
+            <p id="error-message">Randevu alırken bir hata oluştu. Lütfen tekrar deneyin.</p>
+            <button onclick="closeErrorModal()" style="background: #ff5757; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Tamam</button>
+        </div>
+    </div>
+
+
+</div>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+<script>
+    const chatbotToggle = document.getElementById("chatbot-toggle");
+    const chatbot = document.getElementById("chatbot");
+    const chatbotOutput = document.getElementById("chatbot-output");
+    const chatbotInput = document.getElementById("chatbot-input");
+    const chatbotDate = document.getElementById("chatbot-date");
+    const chatbotSend = document.getElementById("chatbot-send");
+
+    let chatbotStep = 0;
+    let chatbotMode = "";
+    let randevuData = {};
+
+    const actions = [
+        { keywords: ["randevu al"], mode: "al", message: "Lütfen poliklinik bilgisini girin." },
+        { keywords: ["randevu iptal"], mode: "iptal", message: "Lütfen doktor adını girin." },
+        { keywords: ["yardım", "yardim", "yardm"], mode: "yardım", message: "Poliklinik hakkında yardım almak için şikayetinizi giriniz." }
+    ];
+    const fuseOptions = {
+        includeScore: true,
+        threshold: 0.4, // Eşleşme hassasiyeti
+        keys: ["keywords"]
+    };
+    const fuse = new Fuse(actions, fuseOptions);
+
+    chatbotToggle.addEventListener("click", () => {
+        if (chatbot.style.display === "none" || chatbot.style.display === "") {
+            chatbot.style.display = "block";
+            chatbotOutput.innerHTML = `<p>Nasıl yardımcı olabilirim? "Randevu Al" , "Randevu İptal" veya "Poliklinik Yardım" yazabilirsiniz.</p>`;
+            chatbotStep = 1; // İlk adım başlangıcı
+        } else {
+            chatbot.style.display = "none";
+        }
+    });
+
+    chatbotSend.addEventListener("click", () => {
+        const userInput = chatbotStep === 3 ? chatbotDate.value : chatbotInput.value.trim();
+        chatbotInput.value = ""; // Giriş alanını temizle
+        chatbotDate.style.display = "none";
+        if (!userInput) return; // Boş girişe işlem yapma
+
+        // Kullanıcı cevabını ekrana yaz
+        chatbotOutput.innerHTML += `<p>${userInput}</p>`;
+
+        if (chatbotStep === 1) {
+            // Kullanıcı girdisini Fuse.js ile fuzzy matching kullanarak kontrol et
+            const result = fuse.search(userInput.toLowerCase());
+            if (result.length > 0) {
+                const matchedAction = result[0].item; // En iyi eşleşmeyi al
+                chatbotMode = matchedAction.mode;
+                chatbotOutput.innerHTML += `<p>${matchedAction.message}</p>`;
+                chatbotStep = 2;
+            } else {
+                chatbotOutput.innerHTML += `<p>Üzgünüm, anlamadım. Lütfen geçerli bir seçenek girin: "Randevu Al", "Randevu İptal" veya "Yardım".</p>`;
+            }
+            return;
+        }
+
+
+        if (chatbotMode === "al") {
+            if (chatbotStep === 2) {
+                // chatbotOutput.innerHTML += `<p><strong>Poliklinik:</strong> ${userInput}</p>`;
+                randevuData.poliklinik = userInput;
+                chatbotOutput.innerHTML += `<p>Lütfen gün bilgisini seçin.</p>`;
+                chatbotDate.style.display = "block";
+                chatbotStep = 3;
+            } else if (chatbotStep === 3) {
+                //chatbotOutput.innerHTML += `<p><strong>Gün:</strong> ${userInput}</p>`;
+                randevuData.gun = userInput;
+                chatbotOutput.innerHTML += `<p>Lütfen saat bilgisi seçin:</p>
+                    <button class="hour-button" onclick="selectHour('08:00')">08:00</button>
+                    <button class="hour-button" onclick="selectHour('09:00')">09:00</button>
+                    <button class="hour-button" onclick="selectHour('10:00')">10:00</button>
+                    <button class="hour-button" onclick="selectHour('11:00')">11:00</button>
+                    <button class="hour-button" onclick="selectHour('11:30')">11:30</button>
+                    <button class="hour-button" onclick="selectHour('12:00')">12:00</button>
+                    <button class="hour-button" onclick="selectHour('14:00')">14:00</button>
+                    `;
+                chatbotStep = 4;
+            }
+        }
+        if (chatbotMode === "iptal") {
+            if (chatbotStep === 2) {
+                // chatbotOutput.innerHTML += `<p><strong>Doktor Adı:</strong> ${userInput}</p>`;
+                randevuData.doktorAdi = userInput;
+                chatbotOutput.innerHTML += `<p>Lütfen poliklinik bilgisini girin.</p>`;
+                chatbotStep = 4;
+            } else if (chatbotStep === 4) {
+                //chatbotOutput.innerHTML += `<p><strong>Poliklinik:</strong> ${userInput}</p>`;
+                randevuData.poliklinik = userInput;
+                chatbotOutput.innerHTML += `<p>Randevunuz iptal ediliyor...</p>`;
+
+                fetch('/Home/RandevuIptal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(randevuData)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            chatbotOutput.innerHTML += `<p>Randevunuz başarıyla iptal edildi.</p>`;
+                            setTimeout(() => location.reload(), 2000); // Sayfa yenileme
+                        } else {
+                            chatbotOutput.innerHTML += `<p>Randevu iptali sırasında bir hata oluştu. Lütfen bilgilerinizi kontrol edin.</p>`;
+                        }
+                    })
+                    .catch(error => {
+                        chatbotOutput.innerHTML += `<p>Bir hata oluştu. Lütfen tekrar deneyin.</p>`;
+                        console.error("Fetch error:", error);
+                    });
+
+                chatbotStep = 0;
+                chatbotMode = "";
+            }
+        }
+        if (chatbotMode === "yardım") {
+            if (chatbotStep === 2) {
+                // Şikayet soruluyor
+                //chatbotOutput.innerHTML += `<p><strong>Şikayetiniz:</strong> ${userInput}</p>`;
+                randevuData.sikayet = userInput;
+                chatbotOutput.innerHTML += `<p>Lütfen uygun polikliniklerinizi almak için biraz bekleyin...</p>`;
+
+                // Şikayete göre uygun poliklinikleri sorgulayan API'yi çağırıyoruz
+                fetch('/Home/UygunPoliklinikler', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(randevuData)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Backend'e yönlendirme yapıyoruz
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = '/Home/Listele3'; // Hedef .cshtml sayfasının action yolu
+
+                            // Poliklinik verilerini input olarak ekliyoruz
+                            const poliklinikInput = document.createElement('input');
+                            poliklinikInput.type = 'hidden';
+                            poliklinikInput.name = 'poliklinikler';
+                            poliklinikInput.value = JSON.stringify(data.poliklinikler); // Poliklinik verilerini JSON string olarak gönderiyoruz
+                            form.appendChild(poliklinikInput);
+
+                            document.body.appendChild(form);
+                            form.submit(); // Formu gönderiyoruz
+                        }
+
+                    })
+                    .catch(error => {
+                        chatbotOutput.innerHTML += `<p>Bir hata oluştu. Lütfen tekrar deneyin.</p>`;
+                        console.error("Fetch error:", error);
+                    });
+            }
+        }
+
+
+    });
+
+    function selectHour(hour) {
+        //chatbotOutput.innerHTML += `<p><strong>Saat:</strong> ${hour}</p>`;
+        randevuData.saat = hour;
+        chatbotOutput.innerHTML += `<p>Randevunuz sorgulanıyor...</p>`;
+        fetch('/Home/Sorgula', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(randevuData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/Home/Listele';
+                } else {
+                    chatbotOutput.innerHTML += `<p>Randevu bulunamadı.</p>`;
+                }
+            })
+            .catch(error => {
+                chatbotOutput.innerHTML += `<p>Bir hata oluştu.</p>`;
+                console.error(error);
+            });
+
+        chatbotStep = 0;
+        chatbotMode = "";
+    }
+
+    chatbotInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            chatbotSend.click(); // Gönder butonunu tetikle
+        }
+    });
+
+    chatbotDate.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            chatbotSend.click(); // Gönder butonunu tetikle
+        }
+    });
+</script>
+
+<style>
+    /* Chatbot kapsayıcı tasarımı */
+    #chatbot {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        font-family: Arial, sans-serif;
+    }
+
+    /* Chatbot başlatma düğmesi */
+    #chatbot-toggle {
+        font-size: 16px;
+        font-weight: bold;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+        #chatbot-toggle:hover {
+            background-color: #0056b3;
+            transform: scale(1.1);
+        }
+
+    /* Chatbot mesaj alanı */
+    #chatbot-output {
+        background-color: #ffffff;
+        border-radius: 8px;
+        padding: 10px;
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Chatbot giriş kutusu */
+    #chatbot-input {
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        outline: none;
+        transition: border 0.3s ease;
+    }
+
+        #chatbot-input:focus {
+            border: 1px solid #007bff;
+        }
+
+    /* Gönder butonu */
+    #chatbot-send {
+        font-size: 14px;
+        font-weight: bold;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+        #chatbot-send:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+    /* Chatbot mesajları */
+    /* Chatbot mesaj alanı */
+    #chatbot-output {
+        background-color: #ffffff;
+        border-radius: 8px;
+        padding: 10px;
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+    }
+
+        /* Chatbot mesajları */
+        #chatbot-output p {
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 12px;
+            max-width: 70%;
+            word-wrap: break-word; /* Uzun kelimelerin taşmasını önler */
+        }
+
+            /* Chatbot yanıt balonu */
+            #chatbot-output p:nth-child(odd) {
+                background-color: #e9ecef;
+                align-self: flex-start; /* Mesajı sola hizalar */
+                color: #333;
+            }
+
+            /* Kullanıcı mesaj balonu */
+            #chatbot-output p:nth-child(even) {
+                background-color: #007bff;
+                color: white;
+                align-self: flex-end; /* Mesajı sağa hizalar */
+            }
+
+
+    /* Saat butonları */
+    .hour-button {
+        padding: 5px;
+        margin: 5px;
+        background-color: #007E6F;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+        .hour-button:hover {
+            background-color: #0056b3;
+        }
+</style>

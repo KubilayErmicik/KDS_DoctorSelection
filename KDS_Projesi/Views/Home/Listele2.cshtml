@@ -1,0 +1,81 @@
+﻿@model List<KDS_Projesi.Doktorlar>
+
+
+@{
+    Layout = null;
+}
+
+@if (TempData["Message"] != null)
+{
+    <div style="margin: 20px auto; padding: 15px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 5px; text-align: center; max-width: 600px;">
+        @TempData["Message"]
+    </div>
+
+    <script>
+        // 5 saniye sonra yönlendirme
+        setTimeout(() => {
+            window.location.href = '@Url.Action("Index", "Home")';
+        }, 5000);
+    </script>
+}
+else
+{
+    <!-- Doktor listesi burada gösterilecek -->
+
+    <!-- Sayfa Başlığı -->
+    <h3 style="text-align: center; margin-bottom: 20px; font-size: 24px; color: #007bff;">Özelleştirilmiş Doktorlar</h3>
+
+    if (Model != null && Model.Any())
+    {
+        <!-- Doktor Tablosu -->
+        <table style="width: 100%; border-collapse: collapse; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+            <thead>
+                <tr style="background-color: #007bff; color: white; text-align: left;">
+                    <th style="border: 1px solid #ddd; padding: 10px;">Doktor Adı - Soyadı</th>
+                    <th style="border: 1px solid #ddd; padding: 10px;">Poliklinik</th>
+                    <th style="border: 1px solid #ddd; padding: 10px;">Gün</th>
+                    <th style="border: 1px solid #ddd; padding: 10px;">Saat</th>
+                    <th style="border: 1px solid #ddd; padding: 10px;">Skor</th>
+                    <th style="border: 1px solid #ddd; padding: 10px; text-align: center;">Randevu Al</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var doktor in Model)
+                {
+                    <tr style="background-color: #f9f9f9; transition: background-color 0.3s;">
+                        <td style="border: 1px solid #ddd; padding: 10px;">@(doktor?.Ad ?? "Bilinmiyor") @(doktor?.Soyad ?? "Bilinmiyor")</td>
+                        <td style="border: 1px solid #ddd; padding: 10px;">@doktor.Poliklinik</td>
+                        <td style="border: 1px solid #ddd; padding: 10px;">@doktor.Gun.ToString("dd/MM/yyyy")</td>
+                        <td style="border: 1px solid #ddd; padding: 10px;">@doktor.Saat.ToString(@"hh\:mm")</td>
+                        <td style="border: 1px solid #ddd; padding: 10px; text-align: right;">@doktor.Skor.ToString("F2")</td>
+                        <td style="border: 1px solid #ddd; padding: 10px; text-align: center;">
+                            <form action="@Url.Action("RandevuOlustur", "Home")" method="post">
+                                <input type="hidden" name="doktorID" value="@doktor.DoktorID" />
+                                <button style="padding: 8px 16px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease;">
+                                    Randevu Al
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <!-- Uyarı Mesajı -->
+        <p style="text-align: center; color: #555; font-size: 18px; margin-top: 20px;">@ViewBag.Message</p>
+    }
+}
+<!-- Stil -->
+<style>
+    /* Tablo Hover Efekti */
+    table tbody tr:hover {
+        background-color: #e9ecef;
+    }
+
+    /* Buton Hover Efekti */
+    button:hover {
+        background-color: #218838;
+    }
+</style>

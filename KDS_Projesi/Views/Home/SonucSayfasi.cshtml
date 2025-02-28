@@ -1,0 +1,60 @@
+﻿@{
+    ViewData["Title"] = "Uygun Poliklinikler";
+}
+
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .poliklinik-item {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .agirlik {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Uygun Poliklinikler</h1>
+    <div id="poliklinik-container"></div>
+
+    <script>
+        window.onload = function () {
+            // URL parametrelerinden poliklinikler bilgisini alıyoruz
+            const urlParams = new URLSearchParams(window.location.search);
+            const polikliniklerData = urlParams.get('poliklinikler');
+            
+            if (polikliniklerData) {
+                // JSON verisini çözümleyerek poliklinikler dizisini oluşturuyoruz
+                const poliklinikler = JSON.parse(decodeURIComponent(polikliniklerData));
+                const container = document.getElementById('poliklinik-container');
+
+                // Poliklinikleri ağırlıklarına göre sıralıyoruz
+                const sortedPoliklinikler = poliklinikler.sort((a, b) => b.agirlik - a.agirlik);
+
+                // Poliklinik listesi oluşturuyoruz
+                sortedPoliklinikler.forEach(poliklinik => {
+                    const poliklinikItem = document.createElement('div');
+                    poliklinikItem.classList.add('poliklinik-item');
+                    poliklinikItem.innerHTML = `
+                        <h3>${poliklinik.poliklinik}</h3>
+                        <p>Ağırlık: <span class="agirlik">${poliklinik.agirlik}</span></p>
+                    `;
+                    container.appendChild(poliklinikItem);
+                });
+            } else {
+                alert('Poliklinik verisi alınamadı.');
+            }
+        }
+    </script>
+</body>
+</html>
